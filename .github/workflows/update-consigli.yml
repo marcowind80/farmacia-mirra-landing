@@ -1,0 +1,38 @@
+name: Aggiorna Consigli della Settimana
+
+on:
+  schedule:
+    # 18:00 UTC = 20:00 ora italiana (CEST, UTC+2, in vigore fino a fine ottobre)
+    # Durante l'ora solare (CET, UTC+1) l'orario effettivo slitta alle 19:00 italiane.
+    - cron: '0 18 * * 0'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update-consigli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Aggiorna index.html con i consigli della settimana
+        run: node scripts/update-consigli.js
+
+      - name: Commit e push se ci sono modifiche
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "Nessuna modifica da pubblicare."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Aggiorna Consigli della Settimana (automatico)"
+          git push
